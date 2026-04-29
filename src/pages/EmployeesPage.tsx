@@ -6,6 +6,7 @@ import { TopBar } from '../components/layout/TopBar';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { Skeleton } from '../components/ui/Skeleton';
+import { SearchBar } from '../components/ui/SearchBar';
 import { EmployeeCard } from '../components/employees/EmployeeCard';
 import { EmployeeGrid } from '../components/employees/EmployeeGrid';
 import {
@@ -13,9 +14,7 @@ import {
   type DepartmentFilterValue,
 } from '../components/employees/DepartmentFilter';
 import { useEmployees } from '../hooks/useEmployees';
-
-// TODO: implement employee search
-// import { SearchBar } from '../components/employees/SearchBar';
+import { useDebouncedValue } from '../hooks/useDebouncedValue';
 
 // TODO: implement list view with EmployeeRow component
 // import { EmployeeRow } from '../components/employees/EmployeeRow';
@@ -24,12 +23,29 @@ import { useEmployees } from '../hooks/useEmployees';
 export default function EmployeesPage() {
   const { data, isLoading, isError } = useEmployees();
   const [department, setDepartment] = useState<DepartmentFilterValue>('All');
+  const [query, setQuery] = useState('');
+  const debouncedQuery = useDebouncedValue(query, 150);
 
   const filtered = useMemo(() => {
     if (!data) return [];
-    if (department === 'All') return data;
-    return data.filter((e) => e.department === department);
-  }, [data, department]);
+
+    const normalizedQuery = debouncedQuery.trim().toLowerCase();
+
+    return data.filter((employee) => {
+      if (department !== 'All' && employee.department !== department) {
+        return false;
+      }
+
+      if (normalizedQuery !== '') {
+        const haystack = `${employee.firstName} ${employee.lastName} ${employee.role} ${employee.email}`.toLowerCase();
+        if (!haystack.includes(normalizedQuery)) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [data, department, debouncedQuery]);
 
   return (
     <>
@@ -56,7 +72,14 @@ export default function EmployeesPage() {
       />
 
       <div className="flex-1 overflow-y-auto px-6 py-6">
-        <div className="mb-6">
+        <div className="mb-6 space-y-3">
+          <div className="max-w-md">
+            <SearchBar
+              value={query}
+              onChange={setQuery}
+              placeholder="Search by name, role, or email"
+            />
+          </div>
           <DepartmentFilter value={department} onChange={setDepartment} />
         </div>
 
@@ -65,7 +88,10 @@ export default function EmployeesPage() {
         ) : isLoading ? (
           <SkeletonGrid />
         ) : filtered.length === 0 ? (
-          <EmptyState department={department} />
+          <EmptyState
+            department={department}
+            hasSearchQuery={debouncedQuery.trim() !== ''}
+          />
         ) : (
           <EmployeeGrid>
             {filtered.map((employee) => (
@@ -104,7 +130,13 @@ function SkeletonGrid() {
   );
 }
 
-function EmptyState({ department }: { department: DepartmentFilterValue }) {
+function EmptyState({
+  department,
+  hasSearchQuery,
+}: {
+  department: DepartmentFilterValue;
+  hasSearchQuery: boolean;
+}) {
   return (
     <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-ink-200 bg-surface/40 px-6 py-16 text-center">
       <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-ink-100 text-ink-400">
@@ -114,11 +146,13 @@ function EmptyState({ department }: { department: DepartmentFilterValue }) {
         No employees found
       </h3>
       <p className="mt-1 max-w-sm text-sm text-ink-500">
-        {department === 'All'
+        {hasSearchQuery
+          ? 'No employees match your search.'
+          : department === 'All'
           ? 'There are no employees in the directory yet. Add the first one to get started.'
           : `No employees found in ${department}. Try a different department.`}
       </p>
-      {department === 'All' && (
+      {!hasSearchQuery && department === 'All' && (
         <Link to="/employees/new" className="mt-4">
           <Button variant="primary" size="sm">
             <Plus className="h-4 w-4" />
