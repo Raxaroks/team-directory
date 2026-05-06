@@ -1,12 +1,16 @@
-import { Link, useParams } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Calendar, Mail, MapPin } from 'lucide-react';
 
 import { TopBar } from '../components/layout/TopBar';
 import { Avatar } from '../components/ui/Avatar';
 import { Badge } from '../components/ui/Badge';
+import { Button } from '../components/ui/Button';
+import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { Skeleton } from '../components/ui/Skeleton';
 import { StatusBadge } from '../components/employees/StatusBadge';
 import { useEmployee } from '../hooks/useEmployees';
+import { useDeleteEmployee } from '../hooks/useDeleteEmployee';
 
 const dateFormatter = new Intl.DateTimeFormat(undefined, {
   year: 'numeric',
@@ -21,7 +25,17 @@ function formatStartDate(iso: string): string {
 
 export default function EmployeeDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { data: employee, isLoading, isError } = useEmployee(id);
+  const { mutateAsync: deleteEmployee, isPending: isDeleting } = useDeleteEmployee();
+
+  const [isConfirmOpen, setConfirmOpen] = useState(false);
+
+  const handleConfirmDelete = async () => {
+    if (!employee) return;
+    await deleteEmployee(employee.id);
+    navigate('/');
+  };
 
   return (
     <>
@@ -67,8 +81,13 @@ export default function EmployeeDetailPage() {
 
                 {/* TODO: implement edit employee */}
                 {/* <Button variant="secondary" size="sm">Edit</Button> */}
-                {/* TODO: implement delete employee (with confirmation dialog) */}
-                {/* <Button variant="ghost" size="sm">Delete</Button> */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setConfirmOpen(true)}
+                >
+                  Delete
+                </Button>
               </div>
 
               <dl className="grid grid-cols-1 gap-x-8 gap-y-5 px-8 py-6 sm:grid-cols-2">
@@ -102,6 +121,26 @@ export default function EmployeeDetailPage() {
           )}
         </div>
       </div>
+
+      <ConfirmDialog
+        open={isConfirmOpen}
+        title="Remove employee"
+        description={
+          employee ? (
+            <>
+              Are you sure you want to remove{' '}
+              <span className="font-semibold text-ink-900">
+                {employee.firstName} {employee.lastName}
+              </span>{' '}
+              from the directory? This action cannot be undone.
+            </>
+          ) : null
+        }
+        confirmLabel="Delete"
+        isPending={isDeleting}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setConfirmOpen(false)}
+      />
     </>
   );
 }
