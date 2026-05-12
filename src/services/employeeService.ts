@@ -39,7 +39,6 @@ export function createEmployee(
 //   return delay(db.update(id, patch));
 // }
 
-// TODO: implement deleteEmployee
-// export function deleteEmployee(id: string): Promise<boolean> {
-//   return delay(db.remove(id));
-// }
+export function deleteEmployee(id: string): Promise<boolean> {
+  return delay(db.remove(id));
+}
