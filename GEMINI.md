@@ -38,6 +38,10 @@ To maintain a clean boundary for future backend integration, follow this three-l
     - Services: `camelCase` verbs (e.g., `getEmployees`).
 - **File Exports**: Each file should have one primary export matching its filename.
 
+### Workflow Conventions
+- **Pull Requests**: Use the GitHub CLI (`gh`) for creating and managing Pull Requests. The standard MCP `create_pull_request` tool has been identified as unreliable in this environment (returns 404).
+    - To create a PR: `gh pr create --title "..." --body-file ... --base main --head ...`
+
 ### React Query Keys
 Maintain the factory pattern for query keys found in `src/hooks/useEmployees.ts`:
 ```ts
