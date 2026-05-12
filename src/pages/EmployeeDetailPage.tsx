@@ -79,8 +79,11 @@ export default function EmployeeDetailPage() {
                   </div>
                 </div>
 
-                {/* TODO: implement edit employee */}
-                {/* <Button variant="secondary" size="sm">Edit</Button> */}
+                <Link to={`/employees/${employee.id}/edit`}>
+                  <Button variant="secondary" size="sm">
+                    Edit
+                  </Button>
+                </Link>
                 <Button
                   variant="ghost"
                   size="sm"

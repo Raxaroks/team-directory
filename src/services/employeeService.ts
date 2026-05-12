@@ -34,10 +34,12 @@ export function createEmployee(
   return delay(db.insert(employee));
 }
 
-// TODO: implement updateEmployee
-// export function updateEmployee(id: string, patch: Partial<Omit<Employee, 'id'>>): Promise<Employee | null> {
-//   return delay(db.update(id, patch));
-// }
+export function updateEmployee(
+  id: string,
+  patch: Partial<Omit<Employee, 'id'>>,
+): Promise<Employee | null> {
+  return delay(db.update(id, patch));
+}
 
 export function deleteEmployee(id: string): Promise<boolean> {
   return delay(db.remove(id));
