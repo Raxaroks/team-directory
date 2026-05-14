@@ -14,6 +14,7 @@ import {
   type DepartmentFilterValue,
 } from '../components/employees/DepartmentFilter';
 import { useEmployees } from '../hooks/useEmployees';
+import { DEPARTMENTS, type Department } from '../types/employee';
 import { useDebouncedValue } from '../hooks/useDebouncedValue';
 
 // TODO: implement list view with EmployeeRow component
@@ -46,6 +47,13 @@ export default function EmployeesPage() {
       return true;
     });
   }, [data, department, debouncedQuery]);
+
+  const departmentCounts = useMemo((): Record<DepartmentFilterValue, number> | null => {
+    if (!data) return null;
+    const counts = Object.fromEntries(DEPARTMENTS.map((d) => [d, 0])) as Record<Department, number>;
+    for (const e of data) counts[e.department]++;
+    return { All: data.length, ...counts };
+  }, [data]);
 
   return (
     <>
@@ -80,7 +88,11 @@ export default function EmployeesPage() {
               placeholder="Search by name, role, or email"
             />
           </div>
-          <DepartmentFilter value={department} onChange={setDepartment} />
+          <DepartmentFilter
+            value={department}
+            onChange={setDepartment}
+            counts={departmentCounts ?? undefined}
+          />
         </div>
 
         {isError ? (
